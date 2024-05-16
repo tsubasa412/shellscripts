@@ -1,0 +1,56 @@
+mv_select () {
+    #rename weird files without having to type them
+    select i; do
+	read -p "rename to: " newname
+	cp "$i" "$newname"
+    done
+}
+
+echo_select () {
+    #just put names on stdout with select
+    select i in "$@"; do
+	echo -n "$i"
+    done
+
+}
+
+readcbr () {
+    local matchcbr='\.cbr$'
+
+    type unrar || return 4 # you need unrar
+    type sxiv || return 4 # you need sxiv
+    [[ -f "$1" ]] || return 3 # no file
+    [[ "$1" =~ $matchcbr ]] || return 2 # not .cbr
+
+    local tmpdir_num=$(md5sum "$1")
+    local tmpdir=${tmpdir_num:0:7}
+    if [[ ! -d "/tmp/${tmpdir}" ]]; then
+	mkdir "/tmp/${tmpdir}"
+	unrar x "$1" /tmp/$tmpdir
+    fi
+
+    sxiv -r /tmp/$tmpdir
+}
+
+transmission_clear () {
+    #move torrent downloads from transmission's home directory
+
+    local USER_TORRENT_DIR="$HOME/torrents/transmission-downloads"
+    ls ~transmission/Downloads/* || return 2 # return if there's nothing to move
+
+    read -p "move files to home transmission download dir?"
+
+    case "$REPLY" in
+	"y" ) mv -v "~transmission/Downloads/*" $USER_TORRENT_DIR
+	      return 0
+	      ;;
+	
+	"n" ) printf "ok nevermind then\n"
+	      return 0
+	      ;;
+	* )
+	    printf "wut\n"
+	    return 1
+	    ;;
+    esac
+}
